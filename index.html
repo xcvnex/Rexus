@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codename: Rexus | Infiltration Logs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        /* General Styling & Hacker Theme */
+        :root {
+            --background-color: #0a0a0a;
+            --primary-text: #c7c7c7; /* Slightly dimmed for comfort */
+            --highlight-red: #e60000;
+            --dark-red: #7a0000;
+            --border-color: #282828; /* Softened border color */
+            --footer-bg: #000000;
+            --footer-text: #555555;
+            --accent-green: #00ff41;
+            --accent-yellow: #ffd700;
+            --glitch-color1: #ff00ff;
+            --glitch-color2: #00ffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--background-color);
+            background-image:
+                linear-gradient(rgba(10, 10, 10, 0.97), rgba(10, 10, 10, 0.97)),
+                repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(51, 0, 0, 0.1) 1px, rgba(51, 0, 0, 0.1) 2px);
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--primary-text);
+            font-size: 14px; /* Reduced base font size */
+            overflow-x: hidden;
+        }
+        
+        /* --- Login/Terminal Section --- */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 1s ease-out 0.5s;
+        }
+        #terminal-content {
+            font-family: 'VT323', monospace; color: var(--highlight-red); /* CHANGED: Color is now red */
+            font-size: 1.1em; white-space: pre-wrap;
+            width: 90%; max-width: 800px;
+        }
+        .hidden { display: none !important; }
+        .invisible { opacity: 0; pointer-events: none; }
+        .cursor { 
+            display: inline-block; 
+            background-color: var(--highlight-red);  /* CHANGED: Color is now red */
+            width: 9px; height: 1.1em; 
+            animation: blink 1s step-end infinite; 
+            vertical-align: bottom;
+        }
+        @keyframes blink { 50% { background-color: transparent; } }
+
+        #password-form { display: inline-block; }
+        #password-input {
+            background: transparent;
+            border: none;
+            color: var(--highlight-red); /* CHANGED: Color is now red */
+            font-family: 'VT323', monospace;
+            font-size: 1em;
+            outline: none;
+        }
+        #response-text {
+            display: block;
+            margin-top: 10px;
+        }
+        .access-denied { color: var(--highlight-red); }
+        .access-granted { color: var(--accent-green); }
+
+        /* Hide main content initially */
+        #main-content {
+            display: none;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
+        h2 { font-family: 'VT323', monospace; color: var(--highlight-red); text-shadow: 0 0 5px var(--dark-red); text-align: center; font-size: 2em; margin-bottom: 25px; }
+        p { line-height: 1.6; margin-bottom: 0.8em; font-size: 0.9em; }
+
+        /* --- REVISED: Professional Header --- */
+        .main-header {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: #050505;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-logo { display: flex; align-items: center; }
+        .logo-art { font-family: 'VT323', monospace; font-size: 1.6em; color: var(--highlight-red); margin-right: 12px; }
+        .header-title h1 { font-size: 1.6em; margin: 0; letter-spacing: 2px; }
+        .header-title .subtitle { font-size: 0.8em; color: var(--primary-text); margin: 0; }
+        .header-status { font-size: 0.8em; text-align: right; }
+        .status-light { display: inline-block; width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; animation: pulse-green 1.5s infinite; margin-right: 6px; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 var(--accent-green); } 70% { box-shadow: 0 0 4px 6px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+        #status-ticker { display: inline-block; transition: opacity 0.5s; }
+
+        /* --- REVISED: Advanced World Map --- */
+        .intro-section { text-align: center; padding: 20px 15px; }
+        #map-container {
+            position: relative;
+            max-width: 100%;
+            margin: 25px auto;
+            background: rgba(0,0,0,0.2);
+        }
+        #world-map { width: 100%; height: auto; display: block; }
+        .country { stroke: #1a1a1a; stroke-width: 0.5px; fill: #111; }
+        .target-line { stroke: var(--highlight-red); stroke-width: 1px; stroke-dasharray: 3 3; animation: dash 1s linear infinite; opacity: 0.6; }
+        @keyframes dash { to { stroke-dashoffset: -6; } }
+        .target-point { fill: var(--highlight-red); }
+        .target-point.circle { animation: pulse-map 1.5s infinite; }
+        .target-point.triangle { animation: pulse-map 1.5s infinite, rotate-triangle 4s linear infinite; transform-origin: center; }
+        .target-point.pointer { animation: pulse-map-pointer 1s infinite; }
+
+        @keyframes pulse-map { 0% { r: 2; opacity: 1; } 100% { r: 12; opacity: 0; } }
+        @keyframes rotate-triangle { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes pulse-map-pointer { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+        
+        /* --- Situation Summary Section --- */
+        .summary-section {
+            padding: 30px 15px;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            background: rgba(0,0,0,0.15);
+        }
+        .summary-section h2 { font-size: 1.8em; }
+        .summary-section p {
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 1em;
+            color: var(--primary-text);
+        }
+
+        /* --- REVISED: Log Entry Section (Accordion) --- */
+        .posts-section { padding: 20px 0; }
+        .log-entry { border: 1px solid var(--border-color); margin-bottom: 8px; background: #0c0c0c; }
+        .log-header { padding: 10px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; transition: background 0.3s; }
+        .log-header:hover { background: #2a2a2a; }
+        .log-header h3 { font-size: 1.1em; color: var(--primary-text); margin: 0; }
+        .log-header .log-status { font-size: 0.8em; }
+        .log-header .log-status.encrypted { color: var(--accent-green); }
+        .log-header .log-status.warning { color: var(--accent-yellow); }
+        .log-header .log-status.critical { color: var(--highlight-red); }
+        .log-content { padding: 0 15px; max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; }
+        .log-content p { padding: 15px 0; margin: 0; font-size: 0.9em; }
+
+        /* --- NEW: Operational Directives Section --- */
+        .directives-section { padding: 30px 0; border-top: 1px solid var(--border-color); }
+        .directives-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .directive-card { background: #111; border: 1px solid var(--border-color); padding: 20px; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .directive-card:hover { transform: translateY(-5px); box-shadow: 0 0 12px var(--dark-red); }
+        .directive-card h3 { font-family: 'VT323', monospace; font-size: 1.4em; color: var(--highlight-red); margin: 0 0 10px 0; }
+        .directive-card p { font-size: 0.85em; margin: 0; }
+
+        /* --- REVISED: Active Persons of Interest Section --- */
+        .targets-section { padding: 30px 0; border-top: 1px solid var(--border-color); }
+        .targets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .target-profile { background-color: #111111; border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; display: flex; flex-direction: column; }
+        .target-profile:hover { transform: translateY(-5px); box-shadow: 0 0 12px var(--dark-red); }
+        .target-header { display: flex; align-items: center; padding: 12px; background: #1a1a1a; border-bottom: 1px solid var(--border-color); }
+        .target-header img { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--border-color); margin-right: 12px; filter: grayscale(100%) contrast(120%); }
+        .target-name h3 { font-size: 1.2em; margin: 0; color: var(--primary-text); }
+        .target-name .alias { font-size: 0.9em; color: var(--highlight-red); }
+        .target-details { padding: 15px; text-align: left; }
+        .target-details p { font-size: 0.85em; }
+
+        /* --- REVISED: Image Posts Section --- */
+        .image-posts-section { padding: 30px 0; border-top: 1px solid var(--border-color); }
+        .image-posts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .image-post-card { background: #111; border: 1px solid var(--border-color); overflow: hidden; transition: box-shadow 0.3s; }
+        .image-post-card:hover { box-shadow: 0 0 12px var(--dark-red); }
+        .image-post-card img { width: 100%; height: 180px; object-fit: cover; display: block; filter: grayscale(50%) sepia(20%); transition: filter 0.3s; }
+        .image-post-card:hover img { filter: grayscale(0%) sepia(0%); }
+        .image-post-content { padding: 15px; }
+        .image-post-content h3 { font-size: 1.2em; margin: 0 0 8px 0; color: var(--primary-text); }
+        .image-post-content p { font-size: 0.85em; margin: 0; }
+
+        /* --- REVISED: Professional Footer --- */
+        .main-footer { background-color: var(--footer-bg); color: var(--footer-text); padding: 40px 20px; text-align: center; border-top: 2px solid var(--border-color); }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto 30px auto; text-align: left; }
+        .footer-column h4 { color: var(--primary-text); font-family: 'VT323', monospace; font-size: 1.3em; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 8px; }
+        .footer-column a { color: var(--footer-text); text-decoration: none; transition: color 0.3s; font-size: 0.9em; }
+        .footer-column a:hover { color: var(--highlight-red); }
+        .footer-column p { font-size: 0.85em; }
+        .footer-bottom { border-top: 1px solid var(--border-color); padding-top: 20px; margin-top: 20px; font-size: 0.8em; }
+        .footer-bottom p { margin: 0; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body { font-size: 13px; }
+            .main-header { flex-direction: column; align-items: flex-start; }
+            .header-status { text-align: left; margin-top: 10px; }
+            h2 { font-size: 1.8em; }
+            .footer-grid { text-align: center; }
+            .targets-grid, .image-posts-grid, .directives-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div id="terminal-content">
+            <span id="terminal-text"></span>
+            <form id="password-form" class="hidden">
+                <input type="password" id="password-input" autocomplete="off" spellcheck="false">
+            </form>
+            <span id="cursor" class="cursor"></span>
+            <div id="response-text"></div>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <header class="main-header">
+            <div class="header-logo">
+                <div class="logo-art">[C]</div>
+                <div class="header-title">
+                    <h1>Codename: Rexus</h1>
+                    <p class="subtitle">Global Network Analysis & Infiltration Logs</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <span class="status-light"></span>
+                <span>STATUS: </span><span id="status-ticker">SECURE CONNECTION</span>
+            </div>
+        </header>
+
+        <section class="intro-section">
+            <div class="container">
+                <h2>[Operation: Worldview Protocol]</h2>
+                <p>Global network mapping active. Lines indicate live data taps. Markers signify active targets. All streams encrypted.</p>
+                <div id="map-container">
+                    <svg id="world-map"></svg>
+                </div>
+            </div>
+        </section>
+
+        <section class="summary-section">
+            <div class="container">
+                <h2>[Situation Summary]</h2>
+                <p>The digital battlefield is set. Our primary targets, Titan Corporation and Aegis Financial, are under active surveillance. The emergence of the unknown operative 'Nyx' has complicated the mission, introducing both unforeseen risks and potential opportunities. All assets are deployed, and the network is primed. We proceed with vigilance. The world is watching.</p>
+            </div>
+        </section>
+
+        <main class="container">
+            <section class="posts-section">
+                <h2>[Infiltration Logs]</h2>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 001</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>Initial breach successful. Circumvented 'Titan' corporation's primary firewall. Zero-day exploit in legacy data archival system confirmed. Backdoor planted.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 002</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>Encountered unknown entity "Nyx" in 'Aegis' financial network. Quantum encryption detected. They left a coded challenge. The game has changed.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 003</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>'Prometheus' server is air-gapped. Social engineering vector initiated via a custom chess engine targeting lead engineer Dr. Aris Thorne. Bait is set.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 004 (hidden wiki)</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>Hidden Wiki sites:
+                    
+
+http://s4k4ceiapwwgcm3mkb6e4diqecpo7kvdnfr5gg7sph7jjppqkvwwqtyd.onion/ – OnionLinks v3
+
+http://6nhmgdpnyoljh5uzr5kwlatx2u3diou4ldeommfxjz3wkhalzgjqxzqd.onion/ – The Hidden Wiki
+
+http://2jwcnprqbugvyi6ok2h2h7u26qc6j5wxm7feh3znlh2qu3h6hjld4kyd.onion/ – Another Hidden Wiki
+
+http://jgwe5cjqdbyvudjqskaajbfibfewew4pndx52dye7ug3mt3jimmktkid.onion/ – Pug’s Ultimate Dark Web Guide
+
+http://zqktlwiuavvvqqt4ybvgvi7tyo4hjl5xgfuvpdf6otjiycgwqbym2qad.onion/wiki/index.php/Main_Page – The original hidden wiki
+
+
+1. Bitcoin anonymity:
+
+
+http://y22arit74fqnnc2pbieq3wqqvkfub6gnlegx3cl6thclos4f7ya7rvad.onion/– Dark Mixer – Anonymous bitcoin mixer
+
+http://hqfld5smkr4b4xrjcco7zotvoqhuuoehjdvoin755iytmpk4sm7cbwad.onion/ – Mixabit – Bitcoin mixer
+
+http://mp3fpv6xbrwka4skqliiifoizghfbjy5uyu77wwnfruwub5s4hly2oid.onion/ – EasyCoin – Bitcoin Wallet and Mixer
+
+http://p2qzxkca42e3wccvqgby7jrcbzlf6g7pnkvybnau4szl5ykdydzmvbid.onion/ – Onionwallet – Anonymous and secure bitcoin wallet and mixer
+
+http://ovai7wvp4yj6jl3wbzihypbq657vpape7lggrlah4pl34utwjrpetwid.onion/ – VirginBitcoins – Buy freshly mined clean bitcoins
+
+
+2. Drug stores:
+
+
+http://wbz2lrxhw4dd7h5t2wnoczmcz5snjpym4pr7dzjmah4vi6yywn37bdyd.onion/ – DCdutchconnectionUK – The dutch connection for the UK
+
+http://iwggpyxn6qv3b2twpwtyhi2sfvgnby2albbcotcysd5f7obrlwbdbkyd.onion/ – DrChronic – Weed straight from the source
+
+http://rfyb5tlhiqtiavwhikdlvb3fumxgqwtg2naanxtiqibidqlox5vispqd.onion/ – TomAndJerry – Cocaine, Heroin, MDMA and LSD from NL
+
+http://ajlu6mrc7lwulwakojrgvvtarotvkvxqosb4psxljgobjhureve4kdqd.onion/ – 420prime – Cannabis in dispensary quality from the UK
+
+http://guzjgkpodzshso2nohspxijzk5jgoaxzqioa7vzy6qdmwpz3hq4mwfid.onion/ – Bitpharma – Biggest european .onion drug store
+
+http://n6qisfgjauj365pxccpr5vizmtb5iavqaug7m7e4ewkxuygk5iim6yyd.onion/ – EuCanna – First Class Cannabis
+
+http://kl4gp72mdxp3uelicjjslqnpomqfr5cbdd3wzo5klo3rjlqjtzhaymqd.onion/ – Smokeables – Finest organic cannabis from the USA
+
+http://7mejofwihleuugda5kfnr7tupvfbaqntjqnfxc4hwmozlcmj2cey3hqd.onion/– CannabisUK – UK wholesale cannabis supplier
+
+http://2ln3x7ru6psileh7il7jot2ufhol4o7nd54z663xonnnmmku4dgkx3ad.onion/– Brainmagic – Best Darkweb psychedelics
+
+http://usmost4cbpesx552s2s4ti3c4nk2xgiu763vhcs3b4uc4ppp3zwnscyd.onion/ – NLGrowers – Coffee Shop grade Cannabis from the Netherlands
+
+http://xf2gry25d3tyxkiu2xlvczd3q7jl6yyhtpodevjugnxia2u665asozad.onion/ – Peoples Drug Store – The Darkwebs best Drug supplier!
+
+http://sga5n7zx6qjty7uwvkxpwstyoh73shst6mx3okouv53uks7ks47msayd.onion/ – DeDope – German Weed Store
+
+
+3. More commercial links:
+
+
+http://prjd5pmbug2cnfs67s3y65ods27vamswdaw2lnwf45ys3pjl55h2gwqd.onion/– Dark Web Hackers for hire
+
+http://55niksbd22qqaedkw36qw4cpofmbxdtbwonxam7ov2ga62zqbhgty3yd.onion/– AccMarket – Premium Paypal, Ebay and bank accounts
+
+http://s57divisqlcjtsyutxjz2ww77vlbwpxgodtijcsrgsuts4js5hnxkhqd.onion/– Cardshop – USA CVV KNOWN BALANCE & Worldwide CC & CVV
+
+http://jbtb75gqlr57qurikzy2bxxjftzkmanynesmoxbzzcp7qf5t46u7ekqd.onion/– Darkmining – Bitcoin mining with stolen electricity
+
+http://jhi4v5rjly75ggha26cu2eeyfhwvgbde4w6d75vepwxt2zht5sqfhuqd.onion/– Bitcoin Investment Trust – earn 5-9% per week!
+
+http://rxmyl3izgquew65nicavsk6loyyblztng6puq42firpvbe32sefvnbad.onion/– Mobile Store – Best unlocked cell phones vendor
+
+http://vhlehwexxmbnvecbmsk4ormttdvhlhbnyabai4cithvizzaduf3gmayd.onion/– Kamagra 4 Bitcoin – Like Viagra but cheaper
+
+http://ymvhtqya23wqpez63gyc3ke4svju3mqsby2awnhd3bk2e65izt7baqad.onion/– OnionIdentityServices – Fake passports and ID cards for bitcoin
+
+http://k6m3fagp4w4wspmdt23fldnwrmknse74gmxosswvaxf3ciasficpenad.onion/–Uk Guns and Ammo Store
+
+http://lqcjo7esbfog5t4r4gyy7jurpzf6cavpfmc4vkal4k2g4ie66ao5mryd.onion/– USfakeIDs – US fake ID store
+
+http://qazkxav4zzmt5xwfw6my362jdwhzrcafz7qpd5kugfgx7z7il5lyb6ad.onion/– Counterfeit USD – High Quality USD counterfeits
+
+http://gd5x24pjoan2pddc2fs6jlmnqbawq562d2qyk6ym4peu5ihzy6gd4jad.onion/– USAcitizenship – become a citizen of the USA
+– EuroGuns
+
+http://okayd5ljzdv4gzrtiqlhtzjbflymfny2bxc2eacej3tamu2nyka7bxad.onion/– Apples4Bitcoin – Iphones, Ipads and more for bitcoin
+
+http://3bp7szl6ehbrnitmbyxzvcm3ieu7ba2kys64oecf4g2b65mcgbafzgqd.onion/– UKpassports – real UK passports
+
+http://xykxv6fmblogxgmzjm5wt6akdhm4wewiarjzcngev4tupgjlyugmc7qd.onion/– ccPal – PayPals, Ebays, CCs and more
+
+http://kq4okz5kf4xosbsnvdr45uukjhbm4oameb6k6agjjsydycvflcewl4qd.onion/– Rent-A-Hacker – Hire a hacker for Bitcoin
+
+http://wk3mtlvp2ej64nuytqm3mjrm6gpulix623abum6ewp64444oreysz7qd.onion/– Webuybitcoins – Sell your Bitcoins for Cash, Paypal, WU etc
+
+http://odahix2ysdtqp4lgak4h2rsnd35dmkdx3ndzjbdhk3jiviqkljfjmnqd.onion/– HQER – High Quality Euro bill counterfeits
+
+4. Everything else:
+
+
+http://danielas3rtn54uwmofdo3x2bsdifr47huasnmbgqzfrec5ubupvtpid.onion/&nbsp;– DanielWin
+
+http://answerszuvs3gg2l64e6hmnryudl5zgrmwm3vh65hzszdghblddvfiqd.onion/ – Hidden Answers
+
+https://kcmykvkkt3umiyx4xouu3sjo6odz3rolqphy2i2bbdan33g3zrjfjgqd.onion/&nbsp;– aboutMastodon
+
+http://dhosting4xxoydyaivckq7tsmtgi4wfs3flpeyitekkmqwu4v4r46syd.onion/&nbsp;– Daniels Hosting
+
+http://cathug2kyi4ilneggumrenayhuhsvrgn6qv2y47bgeet42iivkpynqad.onion/&nbsp;– cathugger’s site
+
+http://zgeajoabenj2nac6k5cei5qy62iu5yun5gm2vjnxy65r3p3amzykwxqd.onion/&nbsp;– Darkweb Blog
+
+http://ozmh2zkwx5cjuzopui64csb5ertcooi5vya6c2gm4e3vcvf2c2qvjiyd.onion/&nbsp;– riseup searx
+
+http://45tbhx5prlejzjgn36nqaxqb6qnm73pbohuvqkpxz2zowh57bxqawkid.onion/&nbsp;– Parckwart’s Website
+
+http://sidignlwz2odjhgcfhbueinmr23v5bubq2x43dskcebh5sbd2qrxtkid.onion/&nbsp;– securejabber
+
+http://sik5nlgfc5qylnnsr57qrbm64zbdx6t4lreyhpon3ychmxmiem7tioad.onion/&nbsp;– Qubes OS
+
+http://dds6qkxpwdeubwucdiaord2xgbbeyds25rbsgr73tbfpqpt4a6vjwsyd.onion/&nbsp;– Whonix
+
+http://lldan5gahapx5k7iafb3s4ikijc4ni7gx5iywdflkba5y2ezyg6sjgyd.onion/ – OnionShare
+
+http://nanochanqzaytwlydykbg5nxkgyjxk3zsrctxuoxdmbx5jbh2ydyprid.onion/&nbsp;– NanoChan
+
+http://picochanwvqfa2xsrfzlul4x4aqtog2eljll5qnj5iagpbhx2vmfqnid.onion/ – PicoChan
+
+http://enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion/&nbsp;– EndChan
+
+http://dngtk6iydmpokbyyk3irqznceft3hze6q6rasrqlz46v7pq4klxnl4yd.onion/&nbsp;– 256Chan
+
+http://cct5wy6mzgmft24xzw6zeaf55aaqmo6324gjlsghdhbiw5gdaaf4pkad.onion/&nbsp;– Snopyta
+
+http://wnrgozz3bmm33em4aln3lrbewf3ikxj7fwglqgla2tpdji4znjp7viqd.onion/&nbsp;– VYempire.xyz
+
+http://7sk2kov2xwx6cbc32phynrifegg6pklmzs7luwcggtzrnlsolxxuyfyd.onion/&nbsp;– SystemLI.org
+
+http://stormwayszuh4juycoy4kwoww5gvcu2c4tdtpkup667pdwe4qenzwayd.onion/&nbsp;– CryptoStorm VPN
+
+http://xdkriz6cn2avvcr2vks5lvvtmfojz2ohjzj4fhyuka55mvljeso2ztqd.onion/&nbsp;– Cock.li
+
+http://eludemailxhnqzfmxehy3bk5guyhlxbunfyhkcksv4gvx6d3wcf6smad.onion/ – Elude.in
+
+http://lainwir3s4y5r7mqm3kurzpljyf77vty2hrrfkps6wm4nnnqzest4lqd.onion/&nbsp;– qord11.net
+
+http://cgjzkysxa4ru5rhrtr6rafckhexbisbtxwg2fg743cjumioysmirhdad.onion/&nbsp;– Course Enigma
+
+http://killnod2s77o3axkktdu52aqmmy4acisz2gicbhjm4xbvxa2zfftteyd.onion/&nbsp;– Kill9
+
+http://digdeep4orxw6psc33yxa2dgmuycj74zi6334xhxjlgppw6odvkzkiad.onion/&nbsp;– DigDeeper
+
+http://spywaredrcdg5krvjnukp3vbdwiqcv3zwbrcg6qh27kiwecm4qyfphid.onion/&nbsp;– Spyware Watchdog
+
+http://meynethaffeecapsvfphrcnfrx44w2nskgls2juwitibvqctk2plvhqd.onion/&nbsp;– May Vane Day Studios
+
+http://zsxjtsgzborzdllyp64c6pwnjz5eic76bsksbxzqefzogwcydnkjy3yd.onion/&nbsp;– Shadow Wiki
+
+http://g7ejphhubv5idbbu3hb3wawrs5adw7tkx7yjabnf65xtzztgg4hcsqqd.onion/&nbsp;– Defcon
+
+http://p53lf57qovyuvwsc6xnrppyply3vtqm7l6pcobkmyqsiofyeznfu5uqd.onion/&nbsp;– Propublica
+
+http://darkzzx4avcsuofgfez5zq75cqc4mprjvfqywo45dfcaxrwqg6qrlfid.onion/&nbsp;– Darknetlive
+
+http://keybase5wmilwokqirssclfnsqrjdsi7jdir5wy7y7iu3tanwmtp6oid.onion/&nbsp;– KeyBase.IO
+
+http://ciadotgov4sjwlzihbbgxnqg3xiyrg7so2r2o3lt5wz5ypk4sxyjstad.onion/&nbsp;– CIA.GOV
+
+http://archivebyd3rzt3ehjpm4c3bjkyxv3hjleiytnvxcn7x32psn2kxcuid.onion/&nbsp;– Internet Archive
+
+http://bible4u2lvhacg4b3to2e2veqpwmrc2c3tjf2wuuqiz332vlwmr4xbad.onion/&nbsp;– Bible4u
+
+http://kx5thpx2olielkihfyo4jgjqfb7zx7wxr3sd4xzt26ochei4m6f7tayd.onion/&nbsp;– Imperial Library
+
+http://nv3x2jozywh63fkohn5mwp2d73vasusjixn3im3ueof52fmbjsigw6ad.onion/&nbsp;– Comic Books</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 005</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>Drone recon of the dead drop revealed a QR code etched onto a park bench. The code resolves to a private, encrypted chat server. Invitation accepted. Proceeding with caution.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 006</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>First contact with Nyx on the secure server. They claim to be a disillusioned Aegis security analyst. They want to expose illegal financial manipulation. Offering inside help. Verifying claims.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 007</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>Dr. Thorne took the bait. Chess engine payload is active on his personal laptop. Now monitoring for connection to the Titan Corp internal network. Phase 2 of Prometheus infiltration is imminent.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 008</h3><span class="log-status encrypted">Status: Encrypted</span></div>
+                    <div class="log-content"><p>Nyx provided a small, encrypted data packet as proof of their claims. It contains transaction logs that appear authentic. This could be the key to Aegis, but it could also be an elaborate trap. Analyzing the data for malware.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 009</h3><span class="log-status encrypted">Status: Payload Active</span></div>
+                    <div class="log-content"><p>Connection established. Dr. Thorne's laptop has connected to the Titan internal network from his home office. Our payload has successfully migrated to the 'Prometheus' staging server. We have a foothold inside the air-gapped network.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 010</h3><span class="log-status warning">Status: Comms Intercepted</span></div>
+                    <div class="log-content"><p>Intercepted an encrypted VOIP call between Titan's CEO and an external entity using a numbered account. Decryption is partial, but keywords are flagged: "Project Chimera," "containment failure," and "asset liquidation." This operation may be larger than we anticipated.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 011</h3><span class="log-status encrypted">Status: Analysis Complete</span></div>
+                    <div class="log-content"><p>Forensic analysis of Nyx's data packet is complete. No malware detected. The packet contains schematics for a quantum computing architecture far beyond known theoretical models. Nyx's claims seem legitimate, but their knowledge is dangerously advanced.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 012</h3><span class="log-status warning">Status: Counter-Surveillance</span></div>
+                    <div class="log-content"><p>Detected a sophisticated network probe originating from an IP tracing back to a federal data center in Virginia. Agent K is closing in faster than expected. Initiating 'Echidna' counter-surveillance protocol and routing all traffic through additional obfuscation layers in Eastern Europe.</p></div>
+                </div>
+                <div class="log-entry">
+                    <div class="log-header"><h3>// Log Entry: 013</h3><span class="log-status critical">Status: Data Exfiltration</span></div>
+                    <div class="log-content"><p>The window of opportunity is closing. Initiating full data exfiltration from the Prometheus staging server. Transferring 2.7 terabytes of project data. ETA: 4 hours. Monitoring internal security flags. Any anomaly will trigger the 'Ghost' protocol. The clock is ticking.</p></div>
+                </div>
+            </section>
+
+            <section class="directives-section">
+                <h2>[Operational Directives]</h2>
+                <div class="directives-grid">
+                    <div class="directive-card">
+                        <h3>Objective: Verify Nyx</h3>
+                        <p>Use provided credentials to access Aegis internal HR database. Cross-reference employee records with known dark web profiles. Establish voice contact using secure, untraceable channel.</p>
+                    </div>
+                    <div class="directive-card">
+                        <h3>Objective: Isolate Prometheus</h3>
+                        <p>Once data exfiltration is complete, trigger payload's secondary function. Sever all physical network connections to the server room. Create a digital black hole. No data in or out.</p>
+                    </div>
+                    <div class="directive-card">
+                        <h3>Contingency: Ghost Protocol</h3>
+                        <p>If compromised, execute 'Ghost'. This will trigger a logic bomb to wipe all deployed assets, burn credentials, and erase all logs from this server. Disavow all actions. We were never here.</p>
+                    </div>
+                     <div class="directive-card">
+                        <h3>Task: Decrypt 'Chimera'</h3>
+                        <p>The intercepted communication is heavily encrypted with a quantum-resistant algorithm. Allocate all available processing power to the decryption task. Understanding 'Project Chimera' is now top priority.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="image-posts-section">
+                <h2>[Field Intelligence]</h2>
+                <div class="image-posts-grid">
+                    <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Titan+Corp+HQ" alt="Titan Corp HQ" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Titan Corp HQ</h3><p>Satellite imagery confirms standard physical security. Weakness appears to be in digital infrastructure, as suspected.</p></div>
+                    </div>
+                    <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Dead+Drop+Location" alt="Dead Drop Location" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Dead Drop Site</h3><p>Drone footage of the park bench used by Nyx. No signs of surveillance, but caution is advised on all future physical interactions.</p></div>
+                    </div>
+                    <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Prometheus+Schematic" alt="Prometheus Schematic" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Prometheus Server</h3><p>A partial schematic acquired from a dark web broker. Confirms the air-gapped nature of the server. Physical access is the only way.</p></div>
+                    </div>
+                     <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Aegis+Data+Center" alt="Aegis Data Center" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Aegis Data Hub</h3><p>Exterior shot of the primary Aegis data center. Physical penetration is impossible. Nyx's assistance is the only viable vector.</p></div>
+                    </div>
+                    <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Agent+K+File" alt="Agent K File" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Agent K</h3><p>Leaked federal file photo of Agent K. Known for unorthodox methods. Active investigation into Titan Corp breach is confirmed.</p></div>
+                    </div>
+                    <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Chess+Tournament" alt="Chess Tournament" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Thorne's Tournament</h3><p>Photo from the online chess tournament where Dr. Thorne downloaded the compromised engine. Social engineering vector was successful.</p></div>
+                    </div>
+                     <div class="image-post-card">
+                        <img src="https://placehold.co/400x200/111111/e60000?text=Encrypted+Data" alt="Encrypted Data" onerror="this.onerror=null;this.src='https://placehold.co/400x200/111/eee?text=Image+Not+Found';">
+                        <div class="image-post-content"><h3>Intel: Nyx's Data Packet</h3><p>Visual representation of the encrypted data packet from Nyx. Currently undergoing deep forensic analysis before it can be trusted.</p></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="targets-section">
+                <h2>[Active Persons of Interest]</h2>
+                <div class="targets-grid">
+                    <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-1" alt="Target 1" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>Johnathan Reed</h3><div class="alias">"The Architect"</div></div></div>
+                        <div class="target-details"><p>Chief network designer at 'Titan' Corp. Key to understanding 'Prometheus' physical security.</p></div>
+                    </div>
+                    <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-2" alt="Target 2" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>Unknown</h3><div class="alias">"Nyx"</div></div></div>
+                        <div class="target-details"><p>Alleged Aegis security analyst. Potential ally or elaborate trap. Motives require verification.</p></div>
+                    </div>
+                    <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-3" alt="Target 3" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>Dr. Aris Thorne</h3><div class="alias">"The Pawn"</div></div></div>
+                        <div class="target-details"><p>Lead engineer on 'Prometheus'. Unwittingly carrying our payload. Critical asset.</p></div>
+                    </div>
+                    <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-4" alt="Target 4" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>Eva Rostova</h3><div class="alias">"The Reporter"</div></div></div>
+                        <div class="target-details"><p>Data journalist getting too close to the 'Titan' story. Monitor communications for leaks.</p></div>
+                    </div>
+                    <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-5" alt="Target 5" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>Mr. Silas</h3><div class="alias">"The Cleaner"</div></div></div>
+                        <div class="target-details"><p>Corporate espionage fixer. His appearance would mean the operation is compromised. Avoid at all costs.</p></div>
+                    </div>
+                    <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-6" alt="Target 6" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>Agent K</h3><div class="alias">"The Hunter"</div></div></div>
+                        <div class="target-details"><p>Federal agent assigned to the Titan Corp case. Known for his relentless pursuit of cybercriminals.</p></div>
+                    </div>
+                     <div class="target-profile">
+                        <div class="target-header"><img src="https://placehold.co/100x100/333333/e0e0e0?text=POI-7" alt="Target 7" onerror="this.onerror=null;this.src='https://placehold.co/100x100/111/eee?text=X';"><div class="target-name"><h3>"The Broker"</h3><div class="alias">"Shadow Trader"</div></div></div>
+                        <div class="target-details"><p>Dark web information dealer. Source of the partial Prometheus schematic. Unreliable but useful.</p></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="main-footer">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>// Navigation</h4>
+                    <ul>
+                        <li><a href="#">[01] Infiltration Logs</a></li>
+                        <li><a href="#">[02] Field Intelligence</a></li>
+                        <li><a href="#">[03] Persons of Interest</a></li>
+                        <li><a href="#">[04] Worldview Protocol</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>// System Links</h4>
+                    <ul>
+                        <li><a href="#">Secure Mail</a></li>
+                        <li><a href="#">Data Encryption Tool</a></li>
+                        <li><a href="#">Network Monitor</a></li>
+                        <li><a href="#">Exit Node Config</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>// Last Known Status</h4>
+                    <p><strong>IP Address:</strong> 172.16.254.1 (Proxied)<br>
+                       <strong>Uptime:</strong> 72:15:43<br>
+                       <strong>Data Packets:</strong> 1.2TB Sent / 8.9TB Rcvd
+                    </p>
+                </div>
+                <div class="footer-column">
+                    <h4>// Warning</h4>
+                    <p>This connection is volatile. All data will be wiped upon termination. Disavow all knowledge of this operation. Leave no trace.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>CONNECTION TERMINATED | TRACES ERASED</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // --- Terminal Login Script ---
+            const loginOverlay = document.getElementById('login-overlay');
+            const mainContent = document.getElementById('main-content');
+            const terminalText = document.getElementById('terminal-text');
+            const passwordForm = document.getElementById('password-form');
+            const passwordInput = document.getElementById('password-input');
+            const responseText = document.getElementById('response-text');
+            const cursor = document.getElementById('cursor');
+            
+            const correctPassword = "Alpha×0.Sierra.6.6.6.nine.×××.0×";
+
+            const textLines = [
+                'Booting SEC-OS v4.0...',
+                'Establishing secure tunnel... [OK]',
+                'Awaiting authentication...'
+            ];
+            
+            let currentLine = 0;
+            function typeLines() {
+                if (currentLine < textLines.length) {
+                    let line = textLines[currentLine];
+                    let i = 0;
+                    terminalText.innerHTML += `\n> ${line}`;
+                    currentLine++;
+                    setTimeout(typeLines, 200 + Math.random() * 150);
+                } else {
+                    // Finished typing boot sequence
+                    setTimeout(activatePasswordEntry, 300);
+                }
+            }
+            
+            function activatePasswordEntry() {
+                terminalText.innerHTML += '\n> Enter password or passphrase: ';
+                passwordForm.classList.remove('hidden');
+                cursor.classList.add('hidden');
+                passwordInput.focus();
+            }
+
+            passwordForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const enteredPassword = passwordInput.value;
+                responseText.innerHTML = ''; // Clear previous response
+
+                if (enteredPassword === correctPassword) {
+                    responseText.classList.add('access-granted');
+                    responseText.textContent = '> [ACCESS GRANTED]';
+                    passwordInput.disabled = true;
+                    setTimeout(finishIntro, 800);
+                } else {
+                    responseText.classList.add('access-denied!');
+                    responseText.textContent = '> [ACCESS DENIED!]';
+                    passwordInput.value = ''; // Clear wrong password
+                    setTimeout(() => {
+                        responseText.textContent = '';
+                        responseText.classList.remove('access-denied!');
+                        passwordInput.focus();
+                    }, 1500);
+                }
+            });
+
+            function finishIntro() {
+                responseText.innerHTML += '\n\n> Welcome, Cipher.\n> Loading interface...';
+                setTimeout(() => {
+                    loginOverlay.classList.add('invisible');
+                    mainContent.style.display = 'block';
+                    // Start post-login scripts
+                    initializeMainContentScripts();
+                }, 1500);
+            }
+
+            // Start the login sequence
+            typeLines();
+
+            // --- Scripts for Main Content (run after login) ---
+            function initializeMainContentScripts() {
+                // --- Header Ticker Script ---
+                const ticker = document.getElementById('status-ticker');
+                const statuses = ["SECURE CONNECTION", "MONITORING TRAFFIC", "ENCRYPTION ACTIVE", "SYSTEM NOMINAL"];
+                let statusIndex = 0;
+                setInterval(() => {
+                    statusIndex = (statusIndex + 1) % statuses.length;
+                    ticker.style.opacity = 0;
+                    setTimeout(() => {
+                        ticker.textContent = statuses[statusIndex];
+                        ticker.style.opacity = 1;
+                    }, 500);
+                }, 5000);
+
+                // --- Advanced World Map Script ---
+                const svg = d3.select("#world-map");
+                const mapContainer = document.getElementById('map-container');
+
+                function drawMap() {
+                    svg.html(""); // Clear previous map elements on resize
+                    const width = mapContainer.clientWidth;
+                    svg.attr("viewBox", `0 0 960 500`);
+
+                    const projection = d3.geoMercator().scale(150).center([0, 20]).translate([960 / 2, 500 / 2]);
+                    const path = d3.geoPath().projection(projection);
+
+                    const origin = [85.1376, 25.5941]; // Patna, Bihar, India
+                    const targets = {
+                        USA_WEST: [-122.4194, 37.7749], USA_EAST: [-74.0060, 40.7128],
+                        RUS: [37.6173, 55.7558], CHN_BEIJING: [116.4074, 39.9042],
+                        CHN_SHANGHAI: [121.4737, 31.2304], GBR: [-0.1278, 51.5074],
+                        DEU: [13.4050, 52.5200], JPN: [139.6917, 35.6895],
+                        ISR: [35.2137, 31.7683], BRA: [-47.8825, -15.7942],
+                        AUS: [151.2093, -33.8688], ZAF: [28.0473, -26.2041]
+                    };
+
+                    d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+                        .then(data => {
+                            const countries = topojson.feature(data, data.objects.countries);
+                            svg.append("g").selectAll("path").data(countries.features)
+                                .enter().append("path").attr("d", path).attr("class", "country");
+
+                            const originPoint = projection(origin);
+                            svg.append("circle").attr("cx", originPoint[0]).attr("cy", originPoint[1]).attr("r", 4).style("fill", "var(--accent-green)").style("stroke", "#000").style("stroke-width", 1);
+
+                            for (const key in targets) {
+                                const targetPoint = projection(targets[key]);
+                                svg.append("line").attr("x1", originPoint[0]).attr("y1", originPoint[1]).attr("x2", targetPoint[0]).attr("y2", targetPoint[1]).attr("class", "target-line");
+                                const shapeType = Math.random();
+                                if (shapeType < 0.6) {
+                                    svg.append("circle").attr("cx", targetPoint[0]).attr("cy", targetPoint[1]).attr("r", 3).attr("class", "target-point circle");
+                                } else if (shapeType < 0.85) {
+                                    const size = 4;
+                                    const points = `${targetPoint[0]},${targetPoint[1]-size} ${targetPoint[0]-size},${targetPoint[1]+size} ${targetPoint[0]+size},${targetPoint[1]+size}`;
+                                    svg.append("polygon").attr("points", points).attr("class", "target-point triangle").style("transform-origin", `${targetPoint[0]}px ${targetPoint[1]}px`);
+                                } else {
+                                    const pSize = 3;
+                                    const g = svg.append("g").attr("class", "target-point pointer");
+                                    g.append("line").attr("x1", targetPoint[0] - pSize).attr("y1", targetPoint[1]).attr("x2", targetPoint[0] + pSize).attr("y2", targetPoint[1]).style("stroke", "var(--highlight-red)").style("stroke-width", 1);
+                                    g.append("line").attr("x1", targetPoint[0]).attr("y1", targetPoint[1] - pSize).attr("x2", targetPoint[0]).attr("y2", targetPoint[1] + pSize).style("stroke", "var(--highlight-red)").style("stroke-width", 1);
+                                }
+                            }
+                        }).catch(error => console.error("Error loading map data:", error));
+                }
+                
+                drawMap();
+                window.addEventListener('resize', drawMap);
+
+                // --- Log Accordion Script ---
+                document.querySelectorAll('.log-header').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const content = header.nextElementSibling;
+                        const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                        document.querySelectorAll('.log-content').forEach(c => {
+                            c.style.maxHeight = '0px';
+                            c.style.paddingTop = '0';
+                            c.style.paddingBottom = '0';
+                        });
+                        if (!isOpen) {
+                            content.style.paddingTop = '15px';
+                            content.style.paddingBottom = '15px';
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
